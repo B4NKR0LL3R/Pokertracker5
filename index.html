@@ -1,0 +1,248 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sharkscope-Like Tracker</title>
+    <style>
+        /* Basic styling for layout */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        header {
+            background-color: #333;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+        }
+        nav {
+            position: sticky;
+            top: 0;
+            background-color: #555;
+            padding: 10px;
+            text-align: center;
+            z-index: 1000;
+        }
+        nav a {
+            color: white;
+            text-decoration: none;
+            margin: 0 15px;
+            font-size: 1.2em;
+        }
+        nav a:hover {
+            text-decoration: underline;
+        }
+        main {
+            padding: 20px;
+            max-width: 1200px;
+            margin: auto;
+        }
+        section {
+            margin-bottom: 40px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input, select, button {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #333;
+            color: white;
+        }
+        #chart {
+            height: 400px;
+            margin-top: 30px;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <header>
+        <h1>Poker Tournament Tracker</h1>
+    </header>
+    <nav>
+        <a href="#upload">Upload</a>
+        <a href="#tournaments">View Tournaments</a>
+        <a href="#dashboard">Dashboard</a>
+    </nav>
+    <main>
+        <section id="upload">
+            <h2>Upload Tournament Results</h2>
+            <div class="form-group">
+                <label for="tournamentName">Tournament Name:</label>
+                <input type="text" id="tournamentName" placeholder="Enter tournament name">
+            </div>
+            <div class="form-group">
+                <label for="tournamentType">Tournament Type:</label>
+                <select id="tournamentType">
+                    <option value="MTT">MTT</option>
+                    <option value="Spins">Spins</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="buyIn">Buy-in:</label>
+                <input type="number" id="buyIn" placeholder="Enter buy-in amount">
+            </div>
+            <div class="form-group">
+                <label for="prize">Prize:</label>
+                <input type="number" id="prize" placeholder="Enter prize amount">
+            </div>
+            <div class="form-group">
+                <label for="itm">In The Money (ITM):</label>
+                <select id="itm">
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="site">Poker Site:</label>
+                <select id="site">
+                    <option value="Olybet">Olybet</option>
+                    <option value="Tigergaming">Tigergaming</option>
+                    <option value="Optibet">Optibet</option>
+                    <option value="Unibet">Unibet</option>
+                    <option value="Pokerstars">Pokerstars</option>
+                    <option value="WPTGlobal">WPTGlobal</option>
+                    <option value="888Poker">888Poker</option>
+                    <option value="ClubGG">ClubGG</option>
+                    <option value="Winamax">Winamax</option>
+                    <option value="ACR">ACR</option>
+                    <option value="Betsafe">Betsafe</option>
+                    <option value="Coinpoker">Coinpoker</option>
+                </select>
+            </div>
+            <button id="addTournament">Add Tournament</button>
+        </section>
+        <section id="tournaments">
+            <h2>View Tournaments</h2>
+            <table id="tournamentTable">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Name</th>
+                        <th>Type</th>
+                        <th>Buy-in</th>
+                        <th>Prize</th>
+                        <th>Profit</th>
+                        <th>ITM</th>
+                        <th>Site</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Tournaments will be listed here dynamically -->
+                </tbody>
+            </table>
+        </section>
+        <section id="dashboard">
+            <h2>Dashboard</h2>
+            <canvas id="chart"></canvas>
+        </section>
+    </main>
+    <script>
+        let tournaments = [];
+
+        document.getElementById('addTournament').addEventListener('click', () => {
+            const name = document.getElementById('tournamentName').value;
+            const type = document.getElementById('tournamentType').value;
+            const buyIn = parseFloat(document.getElementById('buyIn').value);
+            const prize = parseFloat(document.getElementById('prize').value);
+            const itm = document.getElementById('itm').value;
+            const site = document.getElementById('site').value;
+            const date = new Date().toLocaleDateString();
+
+            const profit = prize - buyIn;
+
+            const tournament = { date, name, type, buyIn, prize, profit, itm, site };
+            tournaments.push(tournament);
+            updateTournamentTable();
+            updateChart();
+        });
+
+        function updateTournamentTable() {
+            const tableBody = document.getElementById('tournamentTable').querySelector('tbody');
+            tableBody.innerHTML = '';
+            tournaments.forEach((t, index) => {
+                const row = `<tr>
+                    <td>${t.date}</td>
+                    <td>${t.name}</td>
+                    <td>${t.type}</td>
+                    <td>${t.buyIn}</td>
+                    <td>${t.prize}</td>
+                    <td>${t.profit}</td>
+                    <td>${t.itm}</td>
+                    <td>${t.site}</td>
+                    <td><button onclick="deleteTournament(${index})">Delete</button></td>
+                </tr>`;
+                tableBody.innerHTML += row;
+            });
+        }
+
+        function deleteTournament(index) {
+            tournaments.splice(index, 1);
+            updateTournamentTable();
+            updateChart();
+        }
+
+        function updateChart() {
+            const ctx = document.getElementById('chart').getContext('2d');
+            const data = {
+                labels: tournaments.map((t, i) => `#${i + 1}`),
+                datasets: [{
+                    label: 'Profit Over Time',
+                    data: tournaments.reduce((acc, curr) => {
+                        acc.push((acc.length > 0 ? acc[acc.length - 1] : 0) + curr.profit);
+                        return acc;
+                    }, []),
+                    borderColor: 'blue',
+                    tension: 0.1,
+                    fill: false
+                }]
+            };
+
+            new Chart(ctx, {
+                type: 'line',
+                data: data,
+                options: {
+                    responsive: true,
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function (tooltipItem) {
+                                    const index = tooltipItem.dataIndex;
+                                    const t = tournaments[index];
+                                    return `Date: ${t.date}, Profit: ${t.profit}`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
